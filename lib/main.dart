@@ -28,7 +28,8 @@ class _RunAwayState extends State<RunAway> {
   double x, y;
   double maxX, maxY;
 
-  final threshold = 75.0;
+  final double _ballSize = 50;
+  final double _hoverThreshold = 75.0;
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +50,9 @@ class _RunAwayState extends State<RunAway> {
           AnimatedPositioned(
             duration: Duration(milliseconds: 500),
             curve: Curves.easeInOut,
-            top: (y - 25),
-            left: (x - 25),
-            child: FloatingBall(),
+            top: (y - (_ballSize / 2)),
+            left: (x - (_ballSize / 2)),
+            child: FloatingBall(size: _ballSize),
           ),
         ],
       ),
@@ -60,20 +61,27 @@ class _RunAwayState extends State<RunAway> {
 
   void _runAwayMaybe(PointerEvent e) {
     Offset diff = e.position - Offset(x, y);
-    if (diff.distance < threshold) {
+    if (diff.distance < _hoverThreshold) {
       setState(() {
-        x -= diff.dx;
-        y -= diff.dy;
-
-        // stop at the edges. Does not account for the size (or offset) of the ball.
-        x = math.min(math.max(25, x), maxX - 25);
-        y = math.min(math.max(25, y), maxY - 25);
+        x = _calcNewCoor(x, diff.dx);
+        y = _calcNewCoor(y, diff.dy);
       });
     }
+  }
+
+  double _calcNewCoor(double val, double delta) {
+    val -= delta;
+    val = math.max(val, (_ballSize / 2));
+    val = math.min(val, maxX - (_ballSize / 2));
+    return val;
   }
 }
 
 class FloatingBall extends StatefulWidget {
+  final double size;
+
+  const FloatingBall({Key key, @required this.size}) : super(key: key);
+
   @override
   _FloatingBallState createState() => _FloatingBallState();
 }
@@ -105,8 +113,8 @@ class _FloatingBallState extends State<FloatingBall>
     return SlideTransition(
       position: _offsetAnimation,
       child: Container(
-        height: 50,
-        width: 50,
+        height: widget.size,
+        width: widget.size,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.all(Radius.circular(25)),
           color: Colors.blue,
