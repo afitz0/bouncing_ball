@@ -65,10 +65,9 @@ class _RunAwayState extends State<RunAway> {
         x -= diff.dx;
         y -= diff.dy;
 
-        x = math.min(math.max(0, x), maxX);
-        y = math.min(math.max(0, y), maxY);
-
-        print("Current x,y: $x, $y");
+        // stop at the edges. Does not account for the size (or offset) of the ball.
+        x = math.min(math.max(25, x), maxX - 25);
+        y = math.min(math.max(25, y), maxY - 25);
       });
     }
   }
@@ -91,12 +90,13 @@ class _FloatingBallState extends State<FloatingBall>
       duration: const Duration(seconds: 1),
       vsync: this,
     )..repeat(reverse: true);
+
     _offsetAnimation = Tween<Offset>(
       begin: Offset.zero,
       end: const Offset(0.0, 0.5),
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeInOut,
+      curve: Curves.easeInSine,
     ));
   }
 
