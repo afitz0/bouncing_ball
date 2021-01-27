@@ -79,8 +79,10 @@ class _RunAwayState extends State<RunAway> {
 
 class FloatingBall extends StatefulWidget {
   final double size;
+  final Color color;
 
-  const FloatingBall({Key key, @required this.size}) : super(key: key);
+  const FloatingBall({Key key, @required this.size, this.color = Colors.blue})
+      : super(key: key);
 
   @override
   _FloatingBallState createState() => _FloatingBallState();
@@ -117,8 +119,64 @@ class _FloatingBallState extends State<FloatingBall>
         width: widget.size,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.all(Radius.circular(25)),
-          color: Colors.blue,
+          color: widget.color,
         ),
+        child: GestureDetector(
+          onTap: () => Navigator.of(context).push(_newRoute(widget.color)),
+        ),
+      ),
+    );
+  }
+
+  Route _newRoute(Color floodColor) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          Page2(color: floodColor),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(
+          opacity: animation.drive(
+            Tween(begin: 0.0, end: 1.0).chain(
+              CurveTween(curve: Curves.easeInExpo),
+            ),
+          ),
+          child: ScaleTransition(
+            scale: animation.drive(
+              Tween(begin: 0.25, end: 1.0).chain(
+                CurveTween(curve: Curves.easeOut),
+              ),
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
+  Offset _getOrigin() {
+    final RenderBox renderBoxRed = context.findRenderObject();
+    return renderBoxRed.localToGlobal(Offset.zero);
+  }
+}
+
+class Page2 extends StatelessWidget {
+  final Color color;
+
+  const Page2({Key key, this.color}) : super(key: key);
+
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          Positioned.fill(child: Container(color: color)),
+          Align(
+            alignment: Alignment.topLeft,
+            child: IconButton(
+              icon: Icon(Icons.arrow_back),
+              onPressed: () => Navigator.of(context).pop(),
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
