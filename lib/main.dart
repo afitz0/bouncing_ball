@@ -206,6 +206,10 @@ class Page2 extends StatelessWidget {
               color: Colors.white,
             ),
           ),
+          Align(
+            alignment: Alignment.center,
+            child: Image(image: AssetImage('assets/dash.png')),
+          ),
         ],
       ),
     );
