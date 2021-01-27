@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
+import 'package:flutter/rendering.dart';
+
 void main() {
   runApp(MyApp());
 }
@@ -14,7 +16,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: RunAway(),
+      home: Center(child: RunAway()),
     );
   }
 }
@@ -26,54 +28,111 @@ class RunAway extends StatefulWidget {
 
 class _RunAwayState extends State<RunAway> {
   double x, y;
-  double maxX, maxY;
 
+  double _width;
+  double _height;
   final double _ballSize = 50;
   final double _hoverThreshold = 75.0;
+  final double _padding = 64.0;
 
   @override
   Widget build(BuildContext context) {
     // Center us if we're just starting. Need context for media query.
     if (x == null || y == null) {
-      var size = MediaQuery.of(context).size;
-      x = size.width / 2;
-      y = size.height / 2;
-
-      maxX = size.width;
-      maxY = size.height;
+      _width = MediaQuery.of(context).size.width - _padding * 2;
+      _height = MediaQuery.of(context).size.height - _padding * 2;
+      x = _width / 2;
+      y = _height / 2;
     }
 
-    return MouseRegion(
-      onHover: _runAwayMaybe,
-      child: Stack(
-        children: <Widget>[
-          AnimatedPositioned(
-            duration: Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-            top: (y - (_ballSize / 2)),
-            left: (x - (_ballSize / 2)),
-            child: FloatingBall(size: _ballSize),
-          ),
-        ],
+    return Padding(
+      padding: EdgeInsets.all(_padding),
+      child: MouseRegion(
+        // onHover: _runAwayMaybe,
+        child: Stack(
+          children: <Widget>[
+            Align(
+              alignment: Alignment.center,
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(style: BorderStyle.solid),
+                  color: Colors.transparent,
+                ),
+              ),
+            ),
+            AnimatedPositioned(
+              duration: Duration(milliseconds: 500),
+              curve: Curves.easeInOut,
+              top: y - (_ballSize / 2),
+              left: x - (_ballSize / 2),
+              width: _ballSize,
+              height: _ballSize,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).push(_newRoute(Colors.blue)),
+                child: FloatingBall(size: _ballSize, color: Colors.blue),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   void _runAwayMaybe(PointerEvent e) {
-    Offset diff = e.position - Offset(x, y);
+    Offset diff = e.localPosition - Offset(x, y);
     if (diff.distance < _hoverThreshold) {
       setState(() {
-        x = _calcNewCoor(x, diff.dx);
-        y = _calcNewCoor(y, diff.dy);
+        x = _calcNewCoor(x, diff.dx, _width);
+        // will the ball floating up and down, substract another half-height of the ball for y
+        y = _calcNewCoor(y, diff.dy, _height - (_ballSize / 2));
       });
     }
   }
 
-  double _calcNewCoor(double val, double delta) {
+  double _calcNewCoor(double val, double delta, double max) {
     val -= delta;
     val = math.max(val, (_ballSize / 2));
-    val = math.min(val, maxX - (_ballSize / 2));
+    val = math.min(val, max - (_ballSize / 2));
     return val;
+  }
+
+  Route _newRoute(Color floodColor) {
+    double xAlign = ((x + _ballSize / 2) - _width / 2) / (_width / 2);
+    double yAlign = ((y + _ballSize) - _height / 2) / (_height / 2);
+    Alignment scaleAlign = Alignment(xAlign, yAlign);
+    print(scaleAlign);
+
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          Page2(color: floodColor),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(
+          opacity: animation.drive(
+            Tween(begin: 0.25, end: 1.0).chain(
+              CurveTween(curve: Curves.easeInExpo),
+            ),
+          ),
+          child: ScaleTransition(
+            alignment: scaleAlign,
+            scale: animation.drive(
+              Tween(begin: 0.0, end: 1.0).chain(
+                CurveTween(curve: Curves.easeOut),
+              ),
+            ),
+            child: AnimatedBuilder(
+                animation: animation,
+                builder: (context, child) {
+                  return ClipRRect(
+                    child: child,
+                    borderRadius:
+                        BorderRadius.circular(90 * (1 - animation.value)),
+                  );
+                },
+                child: child),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -112,49 +171,20 @@ class _FloatingBallState extends State<FloatingBall>
 
   @override
   Widget build(BuildContext context) {
-    return SlideTransition(
-      position: _offsetAnimation,
-      child: Container(
-        height: widget.size,
-        width: widget.size,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(25)),
-          color: widget.color,
-        ),
-        child: GestureDetector(
-          onTap: () => Navigator.of(context).push(_newRoute(widget.color)),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: SlideTransition(
+        position: _offsetAnimation,
+        child: Container(
+          height: widget.size,
+          width: widget.size,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(25)),
+            color: widget.color,
+          ),
         ),
       ),
     );
-  }
-
-  Route _newRoute(Color floodColor) {
-    return PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) =>
-          Page2(color: floodColor),
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(
-          opacity: animation.drive(
-            Tween(begin: 0.0, end: 1.0).chain(
-              CurveTween(curve: Curves.easeInExpo),
-            ),
-          ),
-          child: ScaleTransition(
-            scale: animation.drive(
-              Tween(begin: 0.25, end: 1.0).chain(
-                CurveTween(curve: Curves.easeOut),
-              ),
-            ),
-            child: child,
-          ),
-        );
-      },
-    );
-  }
-
-  Offset _getOrigin() {
-    final RenderBox renderBoxRed = context.findRenderObject();
-    return renderBoxRed.localToGlobal(Offset.zero);
   }
 }
 
