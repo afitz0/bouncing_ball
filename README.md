@@ -1,4 +1,4 @@
-# ani_flutterista
+# bouncing ball animations
 
 A new Flutter project.
 
