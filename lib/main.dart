@@ -176,8 +176,9 @@ class _RunAwayState extends State<RunAway> {
                 builder: (context, child) {
                   return ClipRRect(
                     child: child,
-                    borderRadius:
-                        BorderRadius.circular(90 * (1 - animation.value)),
+                    borderRadius: BorderRadius.circular(
+                      90 * (1 - animation.value),
+                    ),
                   );
                 },
                 child: child),
