@@ -21,6 +21,58 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class FloatingBall extends StatefulWidget {
+  final double size;
+  final Color color;
+
+  const FloatingBall({Key key, @required this.size, this.color = Colors.blue})
+      : super(key: key);
+
+  @override
+  _FloatingBallState createState() => _FloatingBallState();
+}
+
+class _FloatingBallState extends State<FloatingBall>
+    with SingleTickerProviderStateMixin {
+  AnimationController _controller;
+  Animation<Offset> _offsetAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _offsetAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(0.0, 0.5),
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInSine,
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: SlideTransition(
+        position: _offsetAnimation,
+        child: Container(
+          height: widget.size,
+          width: widget.size,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(25)),
+            color: widget.color,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class RunAway extends StatefulWidget {
   @override
   _RunAwayState createState() => _RunAwayState();
@@ -48,7 +100,7 @@ class _RunAwayState extends State<RunAway> {
     return Padding(
       padding: EdgeInsets.all(_padding),
       child: MouseRegion(
-        // onHover: _runAwayMaybe,
+        onHover: _runAwayMaybe,
         child: Stack(
           children: <Widget>[
             Align(
@@ -132,58 +184,6 @@ class _RunAwayState extends State<RunAway> {
           ),
         );
       },
-    );
-  }
-}
-
-class FloatingBall extends StatefulWidget {
-  final double size;
-  final Color color;
-
-  const FloatingBall({Key key, @required this.size, this.color = Colors.blue})
-      : super(key: key);
-
-  @override
-  _FloatingBallState createState() => _FloatingBallState();
-}
-
-class _FloatingBallState extends State<FloatingBall>
-    with SingleTickerProviderStateMixin {
-  AnimationController _controller;
-  Animation<Offset> _offsetAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 1),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _offsetAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(0.0, 0.5),
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInSine,
-    ));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: SlideTransition(
-        position: _offsetAnimation,
-        child: Container(
-          height: widget.size,
-          width: widget.size,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(25)),
-            color: widget.color,
-          ),
-        ),
-      ),
     );
   }
 }
